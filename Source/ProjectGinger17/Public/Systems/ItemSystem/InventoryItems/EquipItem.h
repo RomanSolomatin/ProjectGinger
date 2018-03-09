@@ -3,22 +3,18 @@
 #pragma once
 
 #include "Systems/ItemSystem/InventoryItem.h"
-#include "ItemSystem/Interfaces/Equippable.h"
+#include "Characters/CharacterConstants.h"
 #include "Engine/SkeletalMesh.h"
 #include "EquipItem.generated.h"
 
-// Convenient and Safe handling for Socket Name IDs
-UENUM(BlueprintType)
-enum class ECharacterSockets : uint8
-{
-	LeftHand = 0, RightHand = 1, Back = 2
-};
 
 /**
- * 
+ *	Base Class for inventory items that can be equipped to the player.
+ *	Specifies which socket location in the character skeleton the item
+ *	will snap to.
  */
-UCLASS(BlueprintType, Blueprintable, Abstract)
-class PROJECTGINGER17_API UEquipItem : public UInventoryItem, public IEquippable
+UCLASS(BlueprintType, Blueprintable)
+class PROJECTGINGER17_API UEquipItem : public UInventoryItem
 {
 	GENERATED_BODY()
 	
@@ -34,17 +30,16 @@ protected:
 	ECharacterSockets socketId;
 	
 	// The display mesh of this item in the player's hand when equipped.
-	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Equip Item")
-	UStaticMesh* itemMesh;
-	
+	//UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Equip Item")
+	//TAssetPtr<USkeletalMesh> itemMesh;
+
 public:
 
-	// Handles spawning the equippable actor and spawning it in the world
-	virtual void Equip_Implementation(AActor* instigator) override;
+	//TAssetPtr<USkeletalMesh> GetItemVisualMesh() const;
+	ECharacterSockets GetItemSocket() const;
 
-	// Handles despawning the equippable actor
-	virtual void DeEquip_Implementation(AActor* instigator) override;
-	
+	//void SetItemVisualMesh(TAssetPtr<USkeletalMesh> _itemMesh);
+	void SetItemSocket(ECharacterSockets _socket);
 	
 };
 

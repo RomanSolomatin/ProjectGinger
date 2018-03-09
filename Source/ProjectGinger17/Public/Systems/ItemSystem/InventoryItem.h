@@ -20,9 +20,13 @@ class PROJECTGINGER17_API UInventoryItem : public UObject
 public:
 	
 	UInventoryItem();
+
+	FName ItemRowName() const;
+	void SetItemRowName(FName _itemRowName);
 	
 protected:
 
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Buffs")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory Item")
+	FName itemRowName;
 
 };
