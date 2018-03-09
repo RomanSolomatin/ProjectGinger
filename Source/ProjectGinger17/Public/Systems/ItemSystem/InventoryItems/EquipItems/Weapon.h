@@ -26,14 +26,13 @@ protected:
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Weapon Class")
 	TAssetSubclassOf<ABaseWeapon> weaponClass;
 
+	ABaseWeapon* spawnedWeapon;
+
 public:
 
 	// Default Constructor
 	UWeapon();
 
-	virtual void Equip_Implementation(AActor* instigator) override;
-
-	virtual void DeEquip_Implementation(AActor* instigator) override;
 
 	virtual bool Drop_Implementation() override;
 

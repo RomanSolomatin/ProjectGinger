@@ -3,12 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
 #include "ItemSystem/Interfaces/IConsumable.h"
+#include "ItemSystem/BaseGameItem.h"
 #include "BaseConsumable.generated.h"
 
 UCLASS(Abstract)
-class PROJECTGINGER17_API ABaseConsumable : public AActor, public IConsumable
+class PROJECTGINGER17_API ABaseConsumable : public ABaseGameItem, public IConsumable
 {
 	GENERATED_BODY()
 	

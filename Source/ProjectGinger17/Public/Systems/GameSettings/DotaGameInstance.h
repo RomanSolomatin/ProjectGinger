@@ -19,7 +19,5 @@ public:
 	UDotaGameInstance(const FObjectInitializer& ObjectInitializer);
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "Dota Game Instance")
-	AItemFactory* ItemFactory;
-	
-	
+	AItemFactory* ItemFactory;	
 };

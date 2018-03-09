@@ -3,8 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
+#include "ItemSystem/BaseGameItem.h"
 #include "ItemSystem/Interfaces/IWeapons.h"
+#include "ItemSystem/Interfaces/IEquippable.h"
 #include "BaseWeapon.generated.h"
 
 
@@ -30,7 +31,7 @@ enum class EWeaponDamageTypes : uint8
 *	and attached as part of the equipment process.
 */
 UCLASS(Abstract)
-class PROJECTGINGER17_API ABaseWeapon : public AActor, public IIWeapons
+class PROJECTGINGER17_API ABaseWeapon : public ABaseGameItem, public IIWeapons, public IEquippable
 {
 	GENERATED_BODY()
 
@@ -63,22 +64,21 @@ protected:
 
 #pragma endregion
 
+#pragma region WEAPON_ANIMATION_FLAGS
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Weapon Animation Properties")
+		bool bDetectHits;
+
+#pragma endregion
+
+
 
 
 protected:
 
 #pragma region WEAPON_BASIC_PROPERTIES
 
-	/*
-	*	Used to keep track of references to the inventory slot
-	*	responsible for spawning this item. Used for manipulating
-	*	the slot when the item is dropped/removed/hidden.
-	*/
-	UPROPERTY(BlueprintReadOnly, meta = (ExposeOnSpawn = "true"))
-	int owningSlotId;
-
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category = "Weapon Visual")
-	UStaticMeshComponent* weaponMesh;
+	class USkeletalMeshComponent* weaponMesh;
 
 	/*	Modifier List
 	*
@@ -109,14 +109,17 @@ public:
 	// for either Melee or Ranged weapons. Melee weapons will depend on their associated collision mesh
 	// to apply damage, whereas ranged weapons will simply launch the projectile.
 	virtual bool FireWeapon_Implementation() override;
+	virtual void OnEquipped_Implementation() override;
+	virtual void OnDeEquipped_Implementation() override;
 
 	
 #pragma region GETTERS_SETTERS
 	float Damage();
 	float PreAttackTime();
 	float PostAttackTime();
-
-	UStaticMesh* WeaponMesh();
+	
+	EWeaponDamageTypes DamageType();
+	class USkeletalMesh* WeaponMesh();
 	TArray<TAssetSubclassOf<class UBaseBuff>> &GetWeaponModifiers();
 
 
@@ -124,6 +127,8 @@ public:
 	void SetPreAttackTime(float _preAttkTime);
 	void SetPostAttackTime(float _postAttkTime);
 
-	void SetWeaponMesh(UStaticMesh* _mesh);
+	void SetWeaponMesh(class USkeletalMesh* _mesh);
+	void SetWeaponModifiers(TArray<TAssetSubclassOf<class UBaseBuff>> _modifiers);
+	void SetWeaponDamageType(EWeaponDamageTypes _damageType);
 #pragma endregion
 };

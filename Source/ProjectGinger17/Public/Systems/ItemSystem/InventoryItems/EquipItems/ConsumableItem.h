@@ -21,8 +21,4 @@ protected:
 
 public:
 
-	virtual void Equip_Implementation(AActor* instigator) override;
-
-	virtual void DeEquip_Implementation(AActor* instigator) override;
-
 };
