@@ -4,6 +4,9 @@
 //#include "Inventory/InventorySlot.h"
 #include "ItemSystem/InventoryItems/EquipItem.h"
 #include "ItemSystem/InventoryItems/UseItem.h"
+#include "ItemSystem/Weapons/BaseWeapon.h"
+#include "ItemSystem/Consumables/BaseConsumable.h"
+#include "DataContainers/DataTables/WeaponTableRow.h"
 #include "Engine/World.h"
 
 // Singleton Instance of class
@@ -17,10 +20,17 @@ AItemFactory::AItemFactory()
 
 	// Search our assets for an ItemDataTable. If found, assign the itemTable variable to it.
 	// Use the Copy Reference option in the Editor to get the correct path format!
-	ConstructorHelpers::FObjectFinder<UDataTable> itemTableObj (TEXT("DataTable'/Game/DotaX/ItemTable.ItemTable'"));
+	ConstructorHelpers::FObjectFinder<UDataTable> itemTableObj (TEXT("DataTable'/Game/DotaX/ItemTable_A.ItemTable_A'"));
 	if (itemTableObj.Succeeded())
 	{
 		itemTable = itemTableObj.Object;
+	}
+
+	// Search our assets for a WeaponDataTable. If found, assign the weaponTable variable to it.
+	ConstructorHelpers::FObjectFinder<UDataTable> weaponTableObj(TEXT("DataTable'/Game/DotaX/WeaponTable.WeaponTable'"));
+	if (weaponTableObj.Succeeded())
+	{
+		weaponTable = weaponTableObj.Object;
 	}
 }
 
@@ -32,6 +42,11 @@ void AItemFactory::BeginPlay()
 	if (itemTable == NULL)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Item Table was not found!"));
+	}
+
+	if (weaponTable == NULL)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Weapon Table was not found!"));
 	}
 }
 
@@ -47,45 +62,42 @@ AItemFactory* AItemFactory::Instance()
 	return _instance;
 }
 
-/*
-// * High Level Item Instancing Operations
-*/
-AWorldItem* AItemFactory::CreateWorldItem(FName _itemRowName, AActor* _instigator)
+ABaseGameItem * AItemFactory::CreateGameItem(FName _itemRowName, AActor * _instigator)
 {
-	FItemTableRow* itemInfo = GetItemInfo(_itemRowName);
+	FItemTableRow* iteminfo = GetItemInfo(_itemRowName);
 
 	// Do NOT allow the spawning of the actor without a proper instigator.
 	// We need to access the specific instance of UWorld from the instigator.
-	if(!_instigator)
+	if (!_instigator)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("CreateWorldItem: Failed to create instance of item because no proper Instigator was provided."));
 		return NULL;
 	}
 
-	if(itemInfo)
+	if (iteminfo)
 	{
-		// Get the class template for spawning.
-		UClass* itemClass = itemInfo->worldItemType.Get();
+		UClass* itemClass = iteminfo->ItemClass.Get();
 
-		// Verify the item entry has a World Item representation.
-		if (!itemClass) { UE_LOG(LogTemp, Warning, TEXT("CreateWorldItem: Failed to create instance of item. Item has no World Class Type.")); return NULL; }
-		
-		// Spawns the Actor in the instigator's world. The position is in the world's center. To be
-		// modified by the instigator.
-		AWorldItem* spawnedItem = _instigator->GetWorld()->SpawnActor<AWorldItem>(itemClass, FTransform());
-		//
-		// ... Handle Initialization Here...
-		HandleWorldItemInit(spawnedItem, itemInfo);
-		//
-		UE_LOG(LogTemp, Warning, TEXT("CreateWorldItem: Item SPAWNED!"));
+		if (!itemClass) { UE_LOG(LogTemp, Warning, TEXT("CreateGameItem: Failed to create instance of item. Item has no Item Class Type.")); return NULL; }
+
+
+		/* Spawning */
+		ABaseGameItem* spawnedItem = _instigator->GetWorld()->SpawnActor<ABaseGameItem>(itemClass);
+
+		/* Post-Spawn */
+		spawnedItem->SetItemRowName(_itemRowName);
+		spawnedItem->SetItemName(iteminfo->ItemName);
+		spawnedItem->SetItemDescription(iteminfo->ItemDescription);
+
+		/* Sub Class Initialization */
+		HandleSubClassInit(spawnedItem, iteminfo);
+
 		return spawnedItem;
 	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("CreateWorldItem: Failed to create instance of item. Item ID NOT found."));
-		return NULL;
-	}
+
+	return nullptr;
 }
+
 
 
 /* Create Inventory Item
@@ -212,41 +224,12 @@ void AItemFactory::InitializeInventorySlot(FInventorySlot &slot, const FItemTabl
 	
 	slot.itemIcon = itemInfo.ItemIcon;
 	slot.itemMaxStackSize = itemInfo.MaxStackSize;
-	slot.itemQuantity = 1;
 
-	// Setting the category of the item based on its class. The category is used primarily by UI elements.
-	if (itemInfo.inventoryItemType.Get()->IsChildOf(UUseItem::StaticClass()))
-	{
-		slot.itemCategory = (uint8)EItemCategory::Use | (uint8)EItemCategory::Equip;
-	}
-	else if (itemInfo.inventoryItemType.Get()->IsChildOf(UEquipItem::StaticClass()))
-	{
-		slot.itemCategory = (uint8)EItemCategory::Equip;
-	}
-	else
-	{
-		slot.itemCategory = (uint8)EItemCategory::Resource;
-	}
+	slot.itemCategory = itemInfo.inventoryCategory;
 	
 }
 
 
-/*	Handle World Item Init
-*	Called internally by the factory method after CreateWorldItem is called.
-*	This INLINE helper function sets the basic variables/information for the item.
-*
-*	Params
-*	@AWorldItem* item - A Pointer to the item currently being modified.
-*	@FItemTableRow* itemInfo - A Pointer to the ItemTableRow entry that contains the information about the World Item.
-*/
-FORCEINLINE void AItemFactory::HandleWorldItemInit(AWorldItem* item, FItemTableRow* itemInfo)
-{
-	item->SetItemName(itemInfo->ItemName);
-	item->SetItemDescription(itemInfo->ItemDescription);
-	item->SetItemMesh(itemInfo->ItemMesh);
-	item->SetItemCollisionBox(itemInfo->collisionBoxSize);
-	item->SetItemMaterial(itemInfo->ItemMaterial);
-}
 
 /*
 // * Given an InventoryItem, initialize and assemble the item based
@@ -254,6 +237,52 @@ FORCEINLINE void AItemFactory::HandleWorldItemInit(AWorldItem* item, FItemTableR
 */
 FORCEINLINE void AItemFactory::HandleInventoryItemInit(UInventoryItem* item, FItemTableRow* itemInfo)
 {
+
+}
+
+/*	Handle Subclass Init
+*	
+*	Second stage of item construction. Determines the sub class of game items the object belongs to.
+*	Initializes class specific parameters for the item. The calling method then returns the finished, initialized object.
+*
+*	@Params ABaseGameItem*:	A reference to the pointer of the item being initialized.
+*	@Params FItemTableRow*:	A reference to the item table row entry that contains the item information.
+*/
+FORCEINLINE void AItemFactory::HandleSubClassInit(ABaseGameItem* &item, FItemTableRow * itemInfo)
+{
+	// Handle Initialization Weapon Parameters
+	if (item->IsA(ABaseWeapon::StaticClass()))
+	{
+		FWeaponTableRow* weaponInfo = weaponTable->FindRow<FWeaponTableRow>(item->GetItemRowName(), FString(""), true);
+
+		if (weaponInfo)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("ItemFactory: Initializing Weapon Info"));
+			((ABaseWeapon*)item)->SetDamage(weaponInfo->Damage);
+			((ABaseWeapon*)item)->SetPreAttackTime(weaponInfo->PreAttackTime);
+			((ABaseWeapon*)item)->SetPostAttackTime(weaponInfo->PostAttackTime);
+			((ABaseWeapon*)item)->SetWeaponDamageType(weaponInfo->DamageType);
+			((ABaseWeapon*)item)->SetWeaponMesh(weaponInfo->WeaponMesh.LoadSynchronous());
+			((ABaseWeapon*)item)->SetWeaponModifiers(weaponInfo->WeaponModifiers);
+		}
+	}
+
+	// Handle Initialization of Consumable Parameters
+	if (item->IsA(ABaseConsumable::StaticClass()))
+	{
+
+	}
+
+	// Handle Initialization of World Item Parameters
+	if (item->IsA(AWorldItem::StaticClass()))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ItemFactory: Initializing WorldItem Info"))
+		((AWorldItem*)item)->SetItemName(itemInfo->ItemName);
+		((AWorldItem*)item)->SetItemDescription(itemInfo->ItemDescription);
+		((AWorldItem*)item)->SetItemMesh(itemInfo->ItemMesh);
+		((AWorldItem*)item)->SetItemCollisionBox(itemInfo->collisionBoxSize);
+		((AWorldItem*)item)->SetItemMaterial(itemInfo->ItemMaterial);
+	}
 
 }
 #pragma endregion

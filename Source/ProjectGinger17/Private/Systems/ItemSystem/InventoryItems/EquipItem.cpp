@@ -4,25 +4,22 @@
 #include "ItemSystem/Factory/ItemFactory.h"
 #include "Characters/BaseDotaPlayer.h"
 
+//TAssetPtr<USkeletalMesh> UEquipItem::GetItemVisualMesh() const
+//{
+//	return itemMesh;
+//}
 
-
-
-// Handles spawning the equippable actor and spawning it in the world
-void UEquipItem::Equip_Implementation(AActor* instigator)
+ECharacterSockets UEquipItem::GetItemSocket() const
 {
-	if (Cast<ABaseDotaCharacter> (instigator))
-	{
-		((ABaseDotaCharacter*)instigator)->SetEquipSlot(((int)socketId), itemMesh);
-	}
-
-	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, TEXT("Equipping Finished!"));
+	return socketId;
 }
 
-// Handles despawning the equippable actor
-void UEquipItem::DeEquip_Implementation(AActor* instigator)
+//void UEquipItem::SetItemVisualMesh(TAssetPtr<USkeletalMesh> _itemMesh)
+//{
+//	itemMesh = _itemMesh;
+//}
+
+void UEquipItem::SetItemSocket(ECharacterSockets _socket)
 {
-	if (Cast<ABaseDotaCharacter>(instigator))
-	{
-		((ABaseDotaCharacter*)instigator)->SetEquipSlot(((int)socketId), NULL);
-	}
+	socketId = _socket;
 }

@@ -4,14 +4,4 @@
 
 
 
-void UConsumableItem::Equip_Implementation(AActor* instigator)
-{
-	Super::Equip_Implementation(instigator);
-}
-
-
-void UConsumableItem::DeEquip_Implementation(AActor* instigator)
-{
-	Super::DeEquip_Implementation(instigator);
-}
 

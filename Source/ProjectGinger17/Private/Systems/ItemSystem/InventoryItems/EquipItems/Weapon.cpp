@@ -5,37 +5,17 @@
 
 UWeapon::UWeapon()
 {
-
+	socketId = ECharacterSockets::RightHand;
+	spawnedWeapon = NULL;
 }
 
 
-
-void UWeapon::Equip_Implementation(AActor * instigator)
-{
-	Super::Equip_Implementation(instigator);
-
-	if (Cast<ABaseDotaCharacter>(instigator))
-	{
-		((ABaseDotaCharacter*)instigator)->SetCharacterState(ECharacterStates::Combat);
-
-		OnEquippedCharacter();
-	}
-}
-
-void UWeapon::DeEquip_Implementation(AActor * instigator)
-{
-	Super::Equip_Implementation( instigator);
-
-	if (Cast<ABaseDotaCharacter>(instigator))
-	{
-		((ABaseDotaCharacter*)instigator)->SetCharacterState(ECharacterStates::Neutral);
-
-		OnDeEquippedCharacter();
-	}
-}
 
 bool UWeapon::Drop_Implementation()
 {
+	// Destroy the Weapon Actor...
+
+	// Remove the Slot from the Inventory...
 	return false;
 }
 

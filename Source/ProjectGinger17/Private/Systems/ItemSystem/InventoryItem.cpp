@@ -6,5 +6,12 @@ UInventoryItem::UInventoryItem()
 {
 }
 
+FName UInventoryItem::ItemRowName() const
+{
+	return itemRowName;
+}
 
-
+void UInventoryItem::SetItemRowName(FName _itemRowName)
+{
+	itemRowName = _itemRowName;
+}
